@@ -1,6 +1,6 @@
 import { ContentItem } from '../lib/supabase';
-import { format, parseISO } from 'date-fns';
-import { Video, Youtube, Clock, CheckCircle, XCircle, Loader } from 'lucide-react';
+import { format, parseISO, addMinutes, addHours } from 'date-fns';
+import { Video, Youtube, Clock, CheckCircle, XCircle, Loader, AlertCircle } from 'lucide-react';
 
 interface ContentCardProps {
   item: ContentItem;
@@ -23,6 +23,20 @@ export function ContentCard({ item, onGenerate, onUpload, processing }: ContentC
 
   const date = item.date ? parseISO(item.date) : new Date();
   const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
+  const getEstimatedPublishTime = () => {
+    if (item.status === 'pending') {
+      return addMinutes(new Date(), 15);
+    } else if (item.status === 'processing') {
+      return addMinutes(new Date(), 8);
+    } else if (item.status === 'video_ready') {
+      return addMinutes(new Date(), 2);
+    }
+    return null;
+  };
+
+  const estimatedTime = getEstimatedPublishTime();
+  const isScheduled = date > new Date();
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -78,6 +92,31 @@ export function ContentCard({ item, onGenerate, onUpload, processing }: ContentC
           >
             Watch on YouTube
           </a>
+        </div>
+      )}
+
+      {estimatedTime && (item.status === 'pending' || item.status === 'processing' || item.status === 'video_ready') && (
+        <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+          <div className="flex items-start gap-2">
+            <Clock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs font-medium text-amber-900">
+                {isScheduled
+                  ? `Scheduled for ${format(date, 'MMM d, yyyy')}`
+                  : `Estimated publish: ${format(estimatedTime, 'HH:mm')} today`
+                }
+              </p>
+              {!isScheduled && (
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Processing time: ~{
+                    item.status === 'pending' ? '15 min' :
+                    item.status === 'processing' ? '8 min' :
+                    '2 min'
+                  }
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
