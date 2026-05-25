@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Header } from './Header';
 import { ContentCard } from './ContentCard';
 import { AddContentModal } from './AddContentModal';
+import { StatusPanel } from './StatusPanel';
 import { useContent } from '../hooks/useContent';
 import { useVideoGeneration } from '../hooks/useVideoGeneration';
 import { syncFromSheets, uploadToYouTube } from '../lib/api';
-import { Loader, AlertCircle, Plus } from 'lucide-react';
+import { Loader, AlertCircle, Plus, CalendarDays } from 'lucide-react';
 
 export function Dashboard() {
   const { content, loading, error, refetch } = useContent();
@@ -101,6 +102,15 @@ export function Dashboard() {
               </div>
             </div>
           </div>
+        )}
+
+        {content.length > 0 && (
+          <StatusPanel
+            pending={content.filter(c => c.status === 'pending').length}
+            processing={content.filter(c => c.status === 'processing').length}
+            completed={content.filter(c => c.status === 'video_ready' || c.status === 'completed').length}
+            failed={content.filter(c => c.status === 'failed').length}
+          />
         )}
 
         {content.length === 0 ? (
