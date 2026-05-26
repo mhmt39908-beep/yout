@@ -43,12 +43,22 @@ Deno.serve(async (req: Request) => {
       data = { raw: responseText };
     }
 
+    const result = {
+      success: response.ok,
+      status: response.status,
+      headers: {
+        contentType: response.headers.get("content-type"),
+      },
+      data,
+      taskId: data?.data?.taskId || data?.taskId,
+      successFlag: data?.data?.successFlag,
+      response: data?.data?.response,
+    };
+
+    console.log("Final result:", JSON.stringify(result));
+
     return new Response(
-      JSON.stringify({
-        success: response.ok,
-        status: response.status,
-        data,
-      }),
+      JSON.stringify(result),
       {
         headers: {
           ...corsHeaders,
