@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react';
 import { generateVideo, checkVideoStatus } from '../lib/api';
 import { supabase, ContentItem } from '../lib/supabase';
 
-const MAX_RETRIES = 20;
-const POLL_INTERVAL = 30000;
+const MAX_RETRIES = 120;
+const POLL_INTERVAL = 5000;
 
 export function useVideoGeneration() {
   const [processing, setProcessing] = useState(false);
@@ -35,28 +35,32 @@ export function useVideoGeneration() {
       setProgress('Video generation started. Polling for completion...');
 
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        setProgress(`Checking video status (${attempt}/${MAX_RETRIES})...`);
+        setProgress(`Generating video (${attempt}/${MAX_RETRIES})... This may take 5-10 minutes`);
 
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
 
-        const statusResult = await checkVideoStatus(taskId);
+        try {
+          const statusResult = await checkVideoStatus(taskId);
 
-        if (statusResult.isComplete && statusResult.videoUrl) {
-          await supabase
-            .from('content_calendar')
-            .update({
-              video_url: statusResult.videoUrl,
-              status: 'video_ready',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', item.id);
+          if (statusResult.isComplete && statusResult.videoUrl) {
+            await supabase
+              .from('content_calendar')
+              .update({
+                video_url: statusResult.videoUrl,
+                status: 'video_ready',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', item.id);
 
-          setProgress('Video generated successfully!');
-          return true;
+            setProgress('Video generated successfully!');
+            return true;
+          }
+        } catch (pollError) {
+          console.error(`Poll attempt ${attempt} failed:`, pollError);
         }
       }
 
-      throw new Error('Video generation timed out');
+      throw new Error('Video generation timed out after 10 minutes');
 
     } catch (error) {
       await supabase

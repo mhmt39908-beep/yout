@@ -31,6 +31,19 @@ export function Dashboard() {
     setActiveItem(item.id);
     await generateAndPoll(item);
     await refetch();
+
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-worker`;
+    const headers = {
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    };
+
+    fetch(apiUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ contentId: item.id }),
+    }).catch(err => console.error('Worker failed:', err));
+
     setActiveItem(null);
   };
 
