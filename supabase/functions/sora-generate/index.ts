@@ -39,16 +39,22 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Sora API error: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Sora API error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
+    const taskId = data.data?.taskId || data.taskId;
+
+    if (!taskId) {
+      throw new Error("No taskId returned from Sora API");
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        taskId: data.data?.taskId || data.taskId,
-        data: data.data,
+        taskId,
+        data: data.data || data,
       }),
       {
         headers: {
